@@ -30,8 +30,9 @@ public class GlrmMojoModel extends MojoModel {
   public long _seed;  // added to ensure reproducibility
   public boolean _transposed;
   public boolean _reverse_transform;
-  public double accuracyEPS = 1e-6; // reconstruction accuracy A=X*Y
-  public int iterNumbers = 100; // number of times to perform X update.
+  public double _accuracyEps = 1e-16; // reconstruction accuracy A=X*Y
+  public int _iterNumber = 200; // number of times to perform X update.
+  public double _alphaInit;
 
   // We don't really care about regularization of Y since it is changed during scoring
 
@@ -51,7 +52,6 @@ public class GlrmMojoModel extends MojoModel {
   private static final double DOWN_FACTOR = 0.5;
   private static final double UP_FACTOR = Math.pow(1.0/DOWN_FACTOR, 1.0/4);
   public long _rcnt = 0;  // increment per row and can be changed to different values to ensure reproducibility
-  public double _alphaInit = 1.0/_ncolA; // reset back to 1/ncolA just like in training
 
   static {
     //noinspection ConstantAssertCondition,ConstantConditions
@@ -79,7 +79,7 @@ public class GlrmMojoModel extends MojoModel {
     assert _nrowY == _ncolX;
     assert _archetypes.length == _nrowY;
     assert _archetypes[0].length == _ncolY;
-    double alpha=_alphaInit;  // reset back to 1/ncolA just like in training for each row
+    double alpha=1.0/_ncolA;  // reset back to 1/ncolA just like in training for each row
 
     // Step 0: prepare the data row
     double[] a = getRowData(row);
@@ -95,7 +95,7 @@ public class GlrmMojoModel extends MojoModel {
     double obj = objective(x, a);
     boolean done = false;
     int iters = 0;
-    while (!done && iters++ < iterNumbers) {
+    while (!done && iters++ < _iterNumber) {
       // Compute the gradient of the loss function
       double[] grad = gradientL(x, a);
       // Try to make a step of size alpha, until we can achieve improvement in the objective.
@@ -111,8 +111,9 @@ public class GlrmMojoModel extends MojoModel {
 
         if (newobj == 0) break;
         double obj_improvement = 1 - newobj/obj;
+        System.out.println(obj_improvement);
         if (obj_improvement >= 0) {
-          if (obj_improvement < accuracyEPS) done = true;
+          if (obj_improvement < _accuracyEps) done = true;
           obj = newobj;
           x = xnew;
           alpha *= UP_FACTOR;

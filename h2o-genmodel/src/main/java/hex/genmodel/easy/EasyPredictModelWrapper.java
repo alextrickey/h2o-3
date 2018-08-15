@@ -153,7 +153,7 @@ public class EasyPredictModelWrapper implements Serializable {
 
     public Config setGLRMAccuracyEps(double eps) throws IOException {
       if (model==null)
-        throw new IOException("Cannot set GLRM accuracyEPS for a null model.  Call config.setModel() first.");
+        throw new IOException("Cannot set GLRM _accuracyEps for a null model.  Call config.setModel() first.");
 
       if ((eps < 0) && !(model instanceof GlrmMojoModel))
         throw new IOException("You can only set GLRM Accuracy EPS with a GlrmMojoModels and it must be positive.");

@@ -37,9 +37,12 @@ def glrm_mojo():
     transformN = "STANDARDIZE"
     # build a GLRM model with random dataset generated earlier
     glrmModel = H2OGeneralizedLowRankEstimator(k=3, transform=transformN, max_iterations=10, loading_name="xfactors",
-                                               seed=12345, init="random")
+                                               seed=12345, init="random", recover_svd=True)
     glrmModel.train(x=x, training_frame=train)
     glrmTrainFactor = h2o.get_frame(glrmModel._model_json['output']['representation_name'])  # save X factor here
+
+    pred1 = glrmModel.predict(train)
+    pred2 = glrmModel.predict(test)
 
     assert glrmTrainFactor.nrows==train.nrows, \
         "X factor row number {0} should equal training row number {1}.".format(glrmTrainFactor.nrows, train.nrows)
