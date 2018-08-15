@@ -63,8 +63,6 @@ public class EasyPredictModelWrapper implements Serializable {
   private final boolean useExtendedOutput;
   private final boolean enableLeafAssignment;
   private final boolean enableGLRMReconstruct;  // if set true, will return the GLRM resconstructed value, A_hat=X*Y instead of just X
-  private final double glrmAccuracyEps;  // glrm accuracy in rescontructing A = X*Y
-  private final int glrmIterNumber;      // number of iterations allowed in finding X in A=X*Y
 
   /**
    * Observer interface with methods corresponding to errors during the prediction.
@@ -100,8 +98,6 @@ public class EasyPredictModelWrapper implements Serializable {
     private ErrorConsumer errorConsumer;
     private boolean enableLeafAssignment = false;  // default to false
     private boolean enableGLRMReconstrut = false;
-    private double glrmAccuracyEps = 1e-6;  // glrm accuracy in rescontructing A = X*Y
-    private int glrmIterNumber = 100;      // number of iterations allowed in finding X in A=X*Y
 
     /**
      * Specify model object to wrap.
@@ -151,28 +147,6 @@ public class EasyPredictModelWrapper implements Serializable {
       return this;
     }
 
-    public Config setGLRMAccuracyEps(double eps) throws IOException {
-      if (model==null)
-        throw new IOException("Cannot set GLRM _accuracyEps for a null model.  Call config.setModel() first.");
-
-      if ((eps < 0) && !(model instanceof GlrmMojoModel))
-        throw new IOException("You can only set GLRM Accuracy EPS with a GlrmMojoModels and it must be positive.");
-      glrmAccuracyEps = eps;
-      return this;
-    }
-
-    public Config setGLRMIterNumber(int iterNumber) throws IOException {
-      if (model==null)
-        throw new IOException("Cannot set GLRM X update iteration number for a null model.  Call " +
-                "config.setModel() first.");
-
-      if ((iterNumber < 0) && !(model instanceof GlrmMojoModel))
-        throw new IOException("You can only set GLRM X update iteration number with a GlrmMojoModels " +
-                "and it must be positive.");
-      glrmIterNumber = iterNumber;
-      return this;
-    }
-
     public boolean getEnableGLRMReconstrut() { return enableGLRMReconstrut; }
 
     /**
@@ -216,9 +190,6 @@ public class EasyPredictModelWrapper implements Serializable {
 
     public boolean getEnableLeafAssignment() { return enableLeafAssignment;}
 
-    public double getGLRMAccuracyEps() { return glrmAccuracyEps; }
-
-    public int getGLRMIterNumber() { return glrmIterNumber;}
     /**
      * @return An instance of ErrorConsumer used to build the {@link EasyPredictModelWrapper}. Null if there is no instance.
      */
@@ -262,9 +233,6 @@ public class EasyPredictModelWrapper implements Serializable {
     useExtendedOutput = config.getUseExtendedOutput();
     enableLeafAssignment = config.getEnableLeafAssignment();
     enableGLRMReconstruct = config.getEnableGLRMReconstrut();
-    glrmAccuracyEps = config.getGLRMAccuracyEps();
-    glrmIterNumber = config.getGLRMIterNumber();
-
 
     // Create map of input variable domain information.
     // This contains the categorical string to numeric mapping.

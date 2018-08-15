@@ -32,8 +32,6 @@ public class PredictCsv {
   public boolean setInvNumNA = false;    // enable .setConvertInvalidNumbersToNa(true)
   public boolean getTreePath = false; // enable tree models to obtain the leaf-assignment information
   boolean returnGLRMReconstruct = false; // for GLRM, return x factor by default unless set this to true
-  public double glrmAccuracyEps= 1e-6;
-  public int glrmIterNumber = 100;
   // Model instance
   private EasyPredictModelWrapper model;
 
@@ -170,7 +168,7 @@ public class PredictCsv {
 
         break;
 
-      case DimReduction:  // will write factor or the predicted value depending on what the user wants
+      case DimReduction:  // will write factor or the precdicted value depending on what the user wants
         int datawidth;
         String head;
         String[] colnames =  this.model.m.getNames();
@@ -369,16 +367,13 @@ public class PredictCsv {
     if (returnGLRMReconstruct)
       config.setEnableGLRMReconstrut(true);
 
-    config.setGLRMAccuracyEps(glrmAccuracyEps);
-    config.setGLRMIterNumber(glrmIterNumber);
     model = new EasyPredictModelWrapper(config);
   }
 
   private static void usage() {
     System.out.println("");
     System.out.println("Usage:  java [...java args...] hex.genmodel.tools.PredictCsv --mojo mojoName");
-    System.out.println("             --pojo pojoName --input inputFile --output outputFile --separator sepStr" +
-            " --decimal --setConvertInvalidNum");
+    System.out.println("             --pojo pojoName --input inputFile --output outputFile --separator sepStr --decimal --setConvertInvalidNum");
     System.out.println("");
     System.out.println("     --mojo    Name of the zip file containing model's MOJO.");
     System.out.println("     --pojo    Name of the java class containing the model's POJO. Either this ");
@@ -390,12 +385,7 @@ public class PredictCsv {
     System.out.println("     --setConvertInvalidNum Will call .setConvertInvalidNumbersToNa(true) when loading models.");
     System.out.println("     --leafNodeAssignment will show the leaf node assignment for GBM and DRF instead of the" +
             " prediction results");
-    System.out.println("     --glrmAccuracyEPS double representing the accuracy of reconstruction desired.  " +
-            "For mojo only.");
-    System.out.println("     --glrmIterNumber integer representing number of updates to perform while calculating the" +
-            " X factor.  Use a higher value for better accuracy and a lower number for speed.  For mojo only.");
-    System.out.println("     --glrmReconstruct will return the reconstructed dataset for GLRM mojo instead of X" +
-            " factor derived from the dataset.");
+    System.out.println("     --glrmReconstruct will return the reconstructed dataset for GLRM mojo instead of X factor derived from the dataset.");
     System.out.println("");
     System.exit(1);
   }
@@ -420,14 +410,12 @@ public class PredictCsv {
           if (i >= args.length) usage();
           String sarg = args[i];
           switch (s) {
-            case "--model":  pojoMojoModelNames=sarg; loadType=2; break;
-            case "--mojo":   pojoMojoModelNames=sarg; loadType=1; break;
-            case "--pojo":   pojoMojoModelNames=sarg; loadType=0; break;
+            case "--model":  pojoMojoModelNames=sarg; loadType=2; break;//loadModel(sarg); break;
+            case "--mojo":   pojoMojoModelNames=sarg; loadType=1; break;//loadMojo(sarg); break;
+            case "--pojo":   pojoMojoModelNames=sarg; loadType=0; break;//loadPojo(sarg); break;
             case "--input":  inputCSVFileName = sarg; break;
             case "--output": outputCSVFileName = sarg; break;
             case "--separator": separator=sarg.charAt(sarg.length()-1);; break;
-            case "--glrmAccuracyEPS": glrmAccuracyEps=Double.valueOf(sarg); break;
-            case "--glrmIterNumber": glrmIterNumber=Integer.valueOf(sarg); break;
             default:
               System.out.println("ERROR: Unknown command line argument: " + s);
               usage();
