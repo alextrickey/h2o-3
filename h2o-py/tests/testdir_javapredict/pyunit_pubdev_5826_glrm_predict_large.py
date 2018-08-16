@@ -40,7 +40,7 @@ def get_glrm_xmatrix(train, test, compare_predict=True):
     x = train.names
     transform_types = ["NONE", "STANDARDIZE", "NORMALIZE", "DEMEAN", "DESCALE"]
     transformN = transform_types[randint(0, len(transform_types)-1)]
- #   transformN = "STANDARDIZE"
+    print("dataset transform is {0}.".format(transformN))
     # build a GLRM model with random dataset generated earlier
     glrmModel = H2OGeneralizedLowRankEstimator(k=4, transform=transformN, max_iterations=1000, seed=12345)
     glrmModel.train(x=x, training_frame=train)
