@@ -25,13 +25,14 @@ public class GlrmMojoModel extends MojoModel {
   public GlrmInitialization _init;
   public int _ncats;
   public int _nnums;
-  public double[] _normSub;
-  public double[] _normMul;
+  public double[] _normSub; // used to perform dataset transformation.  When no transform is needed, will be 0
+  public double[] _normMul; // used to perform dataset transformation.  When no transform is needed, will be 1
   public long _seed;  // added to ensure reproducibility
   public boolean _transposed;
   public boolean _reverse_transform;
   public double _accuracyEps = 1e-10; // reconstruction accuracy A=X*Y
   public int _iterNumber = 100; // number of times to perform X update.
+  public String _transform = "NONE";  // transform applied to user dataset
 
 
   // We don't really care about regularization of Y since it is changed during scoring
@@ -52,7 +53,7 @@ public class GlrmMojoModel extends MojoModel {
   private static final double DOWN_FACTOR = 0.5;
   private static final double UP_FACTOR = Math.pow(1.0/DOWN_FACTOR, 1.0/4);
   public long _rcnt = 0;  // increment per row and can be changed to different values to ensure reproducibility
-  public int _numAlphaFactors = 8;
+  public int _numAlphaFactors = 20;
   public double[] _allAlphas;
 
   static {
@@ -77,7 +78,7 @@ public class GlrmMojoModel extends MojoModel {
 
   public double[] setAlphas(int numAlpha) {
     double[] alphas = new double[numAlpha];
-    double alpha = 1.0/DOWN_FACTOR;
+    double alpha = 1.0;
     for (int index=0; index < numAlpha; index++) {
       alpha *= DOWN_FACTOR;
       alphas[index] = alpha;
@@ -160,8 +161,10 @@ public class GlrmMojoModel extends MojoModel {
       return 0;
     }
 
+    double alphaScale = oldObj > 10?(1.0/oldObj):1.0;
+
     for (int index=0; index < _numAlphaFactors; index++) {
-      double alpha = _allAlphas[index];
+      double alpha = _allAlphas[index]*alphaScale;  // scale according to object function size
       // Compute the tentative new x (using the prox algorithm)
       for (int k = 0; k < _ncolX; k++) {
         u[k] = x[k] - alpha * grad[k];
@@ -177,7 +180,8 @@ public class GlrmMojoModel extends MojoModel {
       if (newobj == 0)
         break;
     }
-    System.arraycopy(bestX, 0, x, 0, x.length);
+    if (lowestObj < oldObj) // only copy if new result is good
+      System.arraycopy(bestX, 0, x, 0, x.length);
 
     return lowestObj;
   }

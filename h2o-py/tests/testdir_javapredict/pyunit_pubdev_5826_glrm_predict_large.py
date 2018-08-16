@@ -30,32 +30,42 @@ def glrm_mojo():
     train = h2o.import_file(pyunit_utils.locate("smalldata/logreg/benign.csv"))
     test = h2o.import_file(pyunit_utils.locate("smalldata/logreg/benign.csv"))
     get_glrm_xmatrix(train, test)
-    test_glrm_predict(train, test, 2)
 
     # dataset with enum and numerical columns
     train = h2o.import_file(pyunit_utils.locate("smalldata/prostate/prostate_cat.csv"))
     test = h2o.import_file(pyunit_utils.locate("smalldata/prostate/prostate_cat.csv"))
-    test_glrm_predict(train, test, 2)
+    get_glrm_xmatrix(train, test, compare_predict=False)
 
-def get_glrm_xmatrix(train, test):
+def get_glrm_xmatrix(train, test, compare_predict=True):
     x = train.names
     transform_types = ["NONE", "STANDARDIZE", "NORMALIZE", "DEMEAN", "DESCALE"]
     transformN = transform_types[randint(0, len(transform_types)-1)]
+ #   transformN = "STANDARDIZE"
     # build a GLRM model with random dataset generated earlier
-    glrmModel = H2OGeneralizedLowRankEstimator(k=3, transform=transformN, seed=12345)
+    glrmModel = H2OGeneralizedLowRankEstimator(k=4, transform=transformN, max_iterations=1000, seed=12345)
     glrmModel.train(x=x, training_frame=train)
     glrmTrainFactor = h2o.get_frame(glrmModel._model_json['output']['representation_name'])
 
-    save_GLRM_mojo(glrmModel) # save mojo model
+    # assert glrmTrainFactor.nrows==train.nrows, \
+    #     "X factor row number {0} should equal training row number {1}.".format(glrmTrainFactor.nrows, train.nrows)
+    save_GLRM_mojo(glrmModel) # ave mojo model
 
     MOJONAME = pyunit_utils.getMojoName(glrmModel._id)
     TMPDIR = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath('__file__')), "..", "results", MOJONAME))
     h2o.download_csv(test[x], os.path.join(TMPDIR, 'in.csv'))  # save test file, h2o predict/mojo use same file
 
     frameID, mojoXFactor = pyunit_utils.mojo_predict(glrmModel, TMPDIR, MOJONAME, glrmReconstruct=False) # save mojo XFactor
-    glrmTestFactor = h2o.get_frame("GLRMLoading_"+frameID)   # store the x Factor for new test dataset
     print("Comparing mojo x Factor and model x Factor ...")
-    pyunit_utils.compare_frames_local(glrmTestFactor, mojoXFactor, 1, tol=1e-10)
+    # want to compare mojoXFactor and glrmTrainFactor
+    pyunit_utils.compare_data_rows(mojoXFactor, glrmTrainFactor, transformN)
+
+    if compare_predict: # only compare frames with numerical data
+        pred2 = glrmModel.predict(test) # predict using mojo
+        pred1 = glrmModel.predict(train)    # predict using the X from A=X*Y from training
+
+        predictDiff = pyunit_utils.compute_frame_diff(train, pred1)
+        mojoDiff = pyunit_utils.compute_frame_diff(train, pred2)
+        print("absolute difference of mojo predict and original frame is {0} and model predict and original frame is {1}".format(mojoDiff, predictDiff))
 
 def save_GLRM_mojo(model):
     # save model
@@ -67,20 +77,6 @@ def save_GLRM_mojo(model):
     os.makedirs(TMPDIR)
     model.download_mojo(path=TMPDIR)    # save mojo
 
-def test_glrm_predict(train, test, tolerance):
-    x = train.names
-
-    transform_types = ["NONE", "STANDARDIZE", "NORMALIZE", "DEMEAN", "DESCALE"]
-    transformN = transform_types[randint(0, len(transform_types)-1)]
-
-    # build a GLRM model with random dataset generated earlier
-    glrmModel = H2OGeneralizedLowRankEstimator(k=3, transform=transformN, max_iterations=10, loading_name="xfactors",
-                                               seed=12345, init="random")
-    glrmModel.train(x=x, training_frame=train)
-    pred2 = glrmModel.predict(test) # predict using mojo
-    pred1 = glrmModel.predict(train)    # predict using the X from A=X*Y from training
-
-    pyunit_utils.compare_frames_local(pred2, pred1, 1, tol = tolerance) # compare the two reconstructed frames
 
 if __name__ == "__main__":
     pyunit_utils.standalone_test(glrm_mojo)

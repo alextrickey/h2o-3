@@ -4,6 +4,7 @@ import hex.genmodel.ModelMojoReader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  */
@@ -49,7 +50,15 @@ public class GlrmMojoReader extends ModelMojoReader<GlrmMojoModel> {
 
     // new fields added after version 1.00
     try {
-      _model._seed = readkv("seed");
+      _model._transform = readkv("transform");
+      switch (_model._transform) {
+        case "NONE": Arrays.fill(_model._normSub, 0.0);
+          Arrays.fill(_model._normMul, 1.0);
+          break;
+        case "DESCALE": Arrays.fill(_model._normSub, 0.0); break;
+        case "DEMEAN": Arrays.fill(_model._normMul, 1.0); break;
+      }
+      _model._seed = readkv("seed", 0l);
       _model._reverse_transform = readkv("reverse_transform");
       _model._transposed = readkv("transposed");
       _model._catOffsets = readkv("catOffsets");

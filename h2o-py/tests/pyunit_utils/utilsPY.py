@@ -3265,6 +3265,67 @@ def compare_string_frames_local(f1, f2, prob=0.5):
                                                                      "frame1 value: {0}, frame2 value: " \
                                                                      "{1}".format(temp1[rowInd][colInd], temp2[rowInd][colInd], rowInd, colInd)
 
+def inner_product(array1, array2):
+    iSum = 0
+    norm1 = 0
+    norm2 = 0
+    for index in range(len(array1)):
+        v1 = float(array1[index])
+        v2 = float(array2[index])
+        norm1 = norm1+v1*v1
+        norm2 = norm2+v2*v2
+        iSum = iSum+v1*v2
+    return iSum/(math.sqrt(norm1)*math.sqrt(norm2))
+
+def distance(array1, array2):
+    isum = 0
+
+    for index in range(len(array1)):
+        diff = float(array1[index])-float(array2[index])
+        isum = isum+diff*diff
+
+    return math.sqrt(isum)
+
+
+def compare_data_rows(f1, f2, transform, index_list=[], num_rows=10, tol=2):
+    '''
+        This method will compare the relationships of the data rows within each frames.  In particular, we are
+        interested in the relative direction of each row vectors and the relative distances.
+
+    :param f1:
+    :param f2:
+    :param index_list:
+    :param num_rows:
+    :return:
+    '''
+    temp1 = f1.as_data_frame(use_pandas=False)
+    temp2 = f2.as_data_frame(use_pandas=False)
+    if len(index_list)==0:
+        index_list = random.sample(xrange(f1.nrow), num_rows)
+
+    for row_index in range(1, len(index_list)):
+        r1 = inner_product(temp1[index_list[row_index-1]], temp1[index_list[row_index]])
+        r2 = inner_product(temp2[index_list[row_index-1]], temp2[index_list[row_index]])
+        d1 = distance(temp1[index_list[row_index-1]], temp1[index_list[row_index]])
+        d2 = distance(temp2[index_list[row_index-1]], temp2[index_list[row_index]])
+
+        assert min(abs(r1-r2), abs(r1-r2)/max(abs(r1), abs(r2))) < tol, "relationship betwee data row {0} and data row {1} are different among the two" \
+                                 "dataframes".format(index_list[row_index-1], index_list[row_index])
+        if transform != "NONE":
+            assert min(abs(d1-d2), abs(d1-d2)/max(abs(d1), abs(d2))) < tol, "distance betwee data row {0} and data row {1} are different among the two" \
+                                 "dataframes".format(index_list[row_index-1], index_list[row_index])
+
+
+def compute_frame_diff(f1, f2):
+    '''
+    This method will take the absolute difference two frames and sum across all elements
+    :param f1:
+    :param f2:
+    :return:
+    '''
+
+    frameDiff = h2o.H2OFrame.sum(h2o.H2OFrame.sum(h2o.H2OFrame.abs(f1-f2)), axis=1)[0,0]
+    return frameDiff
 
 def compare_frames_local(f1, f2, prob=0.5, tol=1e-6, returnResult=False):
     temp1 = f1.as_data_frame(use_pandas=False)
