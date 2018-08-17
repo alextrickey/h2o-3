@@ -310,9 +310,9 @@ public abstract class SharedTreeModel<
 
     private static AssignLeafNodeTaskBase make(SharedTreeOutput modelOutput, LeafNodeAssignmentType type) {
       switch (type) {
-        case PATH:
+        case Path:
           return new AssignTreePathTask(modelOutput);
-        case NODE_ID:
+        case Node_ID:
           return new AssignLeafNodeIdTask(modelOutput);
         default:
           throw new UnsupportedOperationException("Unknown leaf node assignment type: " + type);

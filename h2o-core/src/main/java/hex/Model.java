@@ -89,7 +89,7 @@ public abstract class Model<M extends Model<M,P,O>, P extends Model.Parameters, 
   }
 
   public interface LeafNodeAssignment {
-    enum LeafNodeAssignmentType { PATH, NODE_ID }
+    enum LeafNodeAssignmentType {Path, Node_ID}
     Frame scoreLeafNodeAssignment(Frame frame, LeafNodeAssignmentType type, Key<Frame> destination_key);
   }
 

@@ -433,7 +433,7 @@ h2o.predict <- function(object, newdata, ...){
 #'        desired
 #' @param newdata An H2OFrame object in which to look for
 #'        variables with which to predict.
-#' @param type choice of either "PATH" when tree paths are to be returned (default); or "NODE_ID" when the output
+#' @param type choice of either "Path" when tree paths are to be returned (default); or "Node_ID" when the output
 #         should be the leaf node IDs.
 #' @param ... additional arguments to pass on.
 #' @return Returns an H2OFrame object with categorical leaf assignment identifiers for
@@ -452,7 +452,7 @@ h2o.predict <- function(object, newdata, ...){
 #' h2o.predict_leaf_node_assignment(prostate.gbm, prostate.hex)
 #' }
 #' @export
-predict_leaf_node_assignment.H2OModel <- function(object, newdata, type = c("PATH", "NODE_ID"), ...) {
+predict_leaf_node_assignment.H2OModel <- function(object, newdata, type = c("Path", "Node_ID"), ...) {
   if (missing(newdata)) {
     stop("predictions with a missing `newdata` argument is not implemented yet")
   }
